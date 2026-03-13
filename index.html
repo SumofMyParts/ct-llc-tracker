@@ -746,13 +746,61 @@ const DEFAULT_OBLIGATIONS = [
     status: 'pending',
     isBuiltIn: true,
     history: []
+  },
+  {
+    id: 'sales-use-tax',
+    title: 'Sales & Use Tax Return — CT DRS (Form OS-114)',
+    description: 'Required because you sell taxable goods/services in CT. File Form OS-114 electronically via myCTDRS. DRS assigns filing frequency based on annual tax liability: annual if under $1,000/yr, quarterly if $1,000–$4,000/yr, monthly if over $4,000/yr. Quarterly returns are due the last day of the month following each quarter end (Apr 30, Jul 31, Oct 31, Jan 31). You must obtain a Sales & Use Tax Permit before collecting tax.',
+    category: 'tax',
+    recurrence: 'quarterly',
+    quarterlyDates: [
+      { month: 4,  day: 30 },
+      { month: 7,  day: 31 },
+      { month: 10, day: 31 },
+      { month: 1,  day: 31 }
+    ],
+    fee: null,
+    filingUrl: 'https://portal.ct.gov/drs/taxes/sales-use-tax/information',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
+  },
+  {
+    id: 'ct-pet-es',
+    title: 'CT-PET ES — Quarterly Estimated Tax Payment',
+    description: 'Required if your annual CT pass-through entity tax liability is expected to be $1,000 or more. Pay electronically via myCTDRS using Form CT-PET ES. Due dates: April 15, June 15, September 15, January 15. Underpayment may result in interest and penalties. Each quarterly payment should cover approximately 25% of the estimated annual liability.',
+    category: 'tax',
+    recurrence: 'quarterly',
+    quarterlyDates: [
+      { month: 4, day: 15 },
+      { month: 6, day: 15 },
+      { month: 9, day: 15 },
+      { month: 1, day: 15 }
+    ],
+    fee: null,
+    filingUrl: 'https://portal.ct.gov/drs/taxes/pass-through-entity/tax-information',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
   }
 ];
 
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      // Merge any new default obligations not yet in saved data
+      const existingIds = new Set((saved.obligations || []).map(o => o.id));
+      DEFAULT_OBLIGATIONS.forEach(def => {
+        if (!existingIds.has(def.id)) {
+          saved.obligations.push(JSON.parse(JSON.stringify(def)));
+        }
+      });
+      return saved;
+    }
   } catch (e) {}
   return {
     profile: {
@@ -799,15 +847,47 @@ function formatDate(dateStr) {
 
 function nextAnnualDate(month, day) {
   const now = new Date();
-  let year = now.getFullYear();
-  const target = new Date(year, month - 1, day);
-  if (target < now) target.setFullYear(year + 1);
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(now.getFullYear(), month - 1, day);
+  if (target < now) target.setFullYear(target.getFullYear() + 1);
   return target.toISOString().split('T')[0];
 }
 
+// Returns the next upcoming date from a quarterly schedule [{month, day}, ...]
+function nextFromDates(dates) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const year = now.getFullYear();
+  const candidates = [];
+  for (let y = year; y <= year + 1; y++) {
+    dates.forEach(d => {
+      const dt = new Date(y, d.month - 1, d.day);
+      if (dt >= now) candidates.push(dt);
+    });
+  }
+  candidates.sort((a, b) => a - b);
+  return candidates[0] ? candidates[0].toISOString().split('T')[0] : null;
+}
+
+// Returns the most recent past due date from a quarterly schedule
+function prevFromDates(dates) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const year = now.getFullYear();
+  const candidates = [];
+  for (let y = year - 1; y <= year; y++) {
+    dates.forEach(d => {
+      const dt = new Date(y, d.month - 1, d.day);
+      if (dt < now) candidates.push(dt);
+    });
+  }
+  candidates.sort((a, b) => b - a);
+  return candidates[0] ? candidates[0].toISOString().split('T')[0] : null;
+}
+
 function getObligationDueDate(ob) {
-  if (!ob.dueDateRule) return ob.customDue || null;
-  if (ob.recurrence === 'annual') return nextAnnualDate(ob.dueDateRule.month, ob.dueDateRule.day);
+  if (ob.recurrence === 'quarterly' && ob.quarterlyDates) return nextFromDates(ob.quarterlyDates);
+  if (ob.recurrence === 'annual' && ob.dueDateRule) return nextAnnualDate(ob.dueDateRule.month, ob.dueDateRule.day);
   return ob.customDue || null;
 }
 
@@ -821,11 +901,16 @@ function computeStatus(ob) {
   if (ob.status === 'filed' && ob.history && ob.history.length) {
     const lastFiled = ob.history[ob.history.length - 1];
     const lastDate = new Date(lastFiled.date + 'T00:00:00');
-    const nextDue = new Date(due + 'T00:00:00');
-    // If last filed date is after the previous year's due date, still current
-    const prevDue = new Date(nextDue);
-    prevDue.setFullYear(prevDue.getFullYear() - 1);
-    if (lastDate >= prevDue) return 'filed';
+    if (ob.recurrence === 'quarterly' && ob.quarterlyDates) {
+      // Filed if last payment was on or after the previous quarterly due date
+      const prev = prevFromDates(ob.quarterlyDates);
+      if (prev && lastDate >= new Date(prev + 'T00:00:00')) return 'filed';
+    } else if (ob.recurrence === 'annual' && ob.dueDateRule) {
+      const nextDue = new Date(due + 'T00:00:00');
+      const prevDue = new Date(nextDue);
+      prevDue.setFullYear(prevDue.getFullYear() - 1);
+      if (lastDate >= prevDue) return 'filed';
+    }
   }
   const days = daysUntil(due);
   if (days < 0) return 'overdue';
@@ -1065,6 +1150,7 @@ function renderObligations() {
     let dueText = '';
     if (ob.recurrence === 'continuous') dueText = 'Ongoing — must be maintained';
     else if (ob.recurrence === 'once') dueText = ob.customDue ? 'Due: ' + formatDate(ob.customDue) : 'One-time';
+    else if (ob.recurrence === 'quarterly' && due) dueText = 'Next due: ' + formatDate(due) + ' (' + daysUntil(due) + ' days) · Quarterly';
     else if (due) dueText = 'Next due: ' + formatDate(due) + ' (' + daysUntil(due) + ' days)';
 
     const feeText = ob.fee != null ? ' · $' + ob.fee : '';
@@ -1262,13 +1348,37 @@ function renderTaxCalendar() {
     </p>`;
 
   const now = new Date();
+
+  // Quarterly CT-PET ES dates (Apr 15, Jun 15, Sep 15, Jan 15)
+  const petEsDates = [
+    { m: 1, d: 15, q: 'Q4 prior year' },
+    { m: 4, d: 15, q: 'Q1' },
+    { m: 6, d: 15, q: 'Q2' },
+    { m: 9, d: 15, q: 'Q3' }
+  ];
+  // Quarterly Sales & Use Tax dates (Apr 30, Jul 31, Oct 31, Jan 31)
+  const sutDates = [
+    { m: 1,  d: 31, q: 'Q4 prior year' },
+    { m: 4,  d: 30, q: 'Q1' },
+    { m: 7,  d: 31, q: 'Q2' },
+    { m: 10, d: 31, q: 'Q3' }
+  ];
+
   const items = [
+    { date: `${year}-01-15`, title: 'CT-PET ES — Q4 Estimated Payment Due', desc: `Estimated CT pass-through entity tax payment for Q4 of ${year - 1}.`, cls: 'hard' },
+    { date: `${year}-01-31`, title: 'Sales & Use Tax — Q4 Return Due (OS-114)', desc: `Form OS-114 for Q4 (Oct–Dec ${year - 1}). File electronically via myCTDRS.`, cls: 'hard' },
     { date: `${year}-01-01`, title: 'Annual Report Window Opens', desc: 'File between January 1 and March 31. Fee: $80. Online only.', cls: 'info' },
-    isMulti && { date: `${year}-03-15`, title: 'CT-1065 / CT-1120SI Payment Due', desc: 'Pass-through entity return payment due. Extension to file (not pay) available to September 15.', cls: 'hard' },
-    isPET && isMulti && { date: `${year}-03-15`, title: 'CT-PET Payment Due', desc: 'Pass-Through Entity Tax payment due if election was made for this year.', cls: 'hard' },
+    isMulti && { date: `${year}-03-15`, title: 'CT-1065 / CT-1120SI Annual Payment Due', desc: 'Pass-through entity tax return payment due. Extension to file (not pay) available to September 15.', cls: 'hard' },
+    isPET && isMulti && { date: `${year}-03-15`, title: 'CT-PET Annual Payment Due', desc: 'Pass-Through Entity Tax payment due if election was made for this year.', cls: 'hard' },
     { date: `${year}-03-31`, title: 'Annual Report Deadline', desc: 'Last day to file the Annual Report with the Secretary of State. $80 fee. Online only.', cls: 'hard' },
-    isMulti && { date: `${year}-09-15`, title: isExtended ? 'CT-1065 Extended Filing Deadline' : 'CT-1065 Extension Deadline', desc: isExtended ? 'Extended filing due. Note: payment was still due March 15.' : 'Available deadline if extension was filed. Payment still due March 15.', cls: isExtended ? 'hard' : 'info' },
-  ].filter(Boolean);
+    { date: `${year}-04-15`, title: 'CT-PET ES — Q1 Estimated Payment Due', desc: `Estimated CT pass-through entity tax payment for Q1 (Jan–Mar ${year}).`, cls: 'hard' },
+    { date: `${year}-04-30`, title: 'Sales & Use Tax — Q1 Return Due (OS-114)', desc: `Form OS-114 for Q1 (Jan–Mar ${year}). File electronically via myCTDRS.`, cls: 'hard' },
+    { date: `${year}-06-15`, title: 'CT-PET ES — Q2 Estimated Payment Due', desc: `Estimated CT pass-through entity tax payment for Q2 (Apr–Jun ${year}).`, cls: 'hard' },
+    { date: `${year}-07-31`, title: 'Sales & Use Tax — Q2 Return Due (OS-114)', desc: `Form OS-114 for Q2 (Apr–Jun ${year}). File electronically via myCTDRS.`, cls: 'hard' },
+    { date: `${year}-09-15`, title: isExtended ? 'CT-1065 Extended Filing Deadline' : 'CT-1065 Extension Deadline', desc: isExtended ? 'Extended annual filing due. Payment was still due March 15.' : 'Deadline if extension was filed. Payment still due March 15.', cls: isExtended && isMulti ? 'hard' : 'info' },
+    { date: `${year}-09-15`, title: 'CT-PET ES — Q3 Estimated Payment Due', desc: `Estimated CT pass-through entity tax payment for Q3 (Jul–Sep ${year}).`, cls: 'hard' },
+    { date: `${year}-10-31`, title: 'Sales & Use Tax — Q3 Return Due (OS-114)', desc: `Form OS-114 for Q3 (Jul–Sep ${year}). File electronically via myCTDRS.`, cls: 'hard' },
+  ].filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
 
   document.getElementById('tax-timeline').innerHTML = items.map(item => {
     const d = new Date(item.date + 'T00:00:00');
