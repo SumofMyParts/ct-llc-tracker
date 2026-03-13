@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CT LLC Compliance Tracker</title>
+<style>
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --surface2: #22263a;
+  --border:   #2a2d3e;
+  --primary:  #4f8ef7;
+  --success:  #2ecc71;
+  --warning:  #f39c12;
+  --danger:   #e74c3c;
+  --text:     #dde0ee;
+  --muted:    #7878a0;
+  --radius:   10px;
+  --font:     'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  min-height: 100vh;
+}
+
+/* ---- NAV ---- */
+nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow-x: auto;
+}
+nav .brand {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--primary);
+  white-space: nowrap;
+  margin-right: 20px;
+  padding: 14px 0;
+  flex-shrink: 0;
+}
+nav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 14px 14px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+nav button:hover { color: var(--text); }
+nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* ---- MAIN ---- */
+main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* ---- VIEWS ---- */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ---- CARDS ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-bottom: 14px;
+}
+
+/* ---- GRID ---- */
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (max-width: 600px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+/* ---- STAT CARDS ---- */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+}
+.stat-value { font-size: 2.4em; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.stat-label { font-size: 12px; color: var(--muted); line-height: 1.3; }
+
+/* ---- BADGES ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.badge-success { background: rgba(46,204,113,0.15); color: #2ecc71; }
+.badge-warning { background: rgba(243,156,18,0.15); color: #f39c12; }
+.badge-danger  { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.badge-muted   { background: rgba(120,120,160,0.15); color: var(--muted); }
+.badge-primary { background: rgba(79,142,247,0.15); color: var(--primary); }
+
+/* ---- OBLIGATION ROWS ---- */
+.obligation-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.obligation-item:hover { border-color: var(--primary); }
+.obligation-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.obligation-title { font-weight: 600; font-size: 14px; flex: 1; }
+.obligation-due { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.obligation-detail {
+  display: none;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.obligation-item.expanded .obligation-detail { display: block; }
+
+/* ---- FORMS ---- */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--primary); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ---- BUTTONS ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { opacity: 0.85; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-danger  { background: var(--danger); color: #fff; }
+.btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-sm      { padding: 5px 12px; font-size: 12px; }
+
+/* ---- CHECKLIST ---- */
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--success);
+}
+.checklist-item .check-text { flex: 1; font-size: 14px; line-height: 1.4; }
+.checklist-item .check-text.done { text-decoration: line-through; color: var(--muted); }
+
+/* ---- TIMELINE ---- */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.tl-item { position: relative; margin-bottom: 22px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -20px; top: 5px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 2px solid var(--bg);
+}
+.tl-item.done::before { background: var(--success); }
+.tl-item.upcoming::before { background: var(--warning); }
+.tl-item.hard::before { background: var(--danger); }
+.tl-item.na::before { background: var(--muted); }
+.tl-date { font-size: 11px; color: var(--muted); margin-bottom: 2px; font-weight: 600; }
+.tl-title { font-size: 14px; font-weight: 600; }
+.tl-desc { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+
+/* ---- HISTORY TABLE ---- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+/* ---- ALERTS ---- */
+.alert {
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.alert-danger  { background: rgba(231,76,60,0.12); border: 1px solid rgba(231,76,60,0.3); color: #f08080; }
+.alert-warning { background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.3); color: #f7c26b; }
+.alert-success { background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.3); color: #5edb94; }
+.alert-info    { background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.3); color: #7aabff; }
+
+/* ---- SECTION HEADING ---- */
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.section-heading h2 { font-size: 19px; font-weight: 700; }
+
+/* ---- MEMBER ROW ---- */
+.member-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.member-row input { flex: 1; }
+.member-row .pct-input { width: 90px; flex-shrink: 0; }
+
+/* ---- PROGRESS BAR ---- */
+.progress-bar { background: var(--border); border-radius: 4px; height: 7px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.3s; }
+
+/* ---- MODAL ---- */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ NAV -->
+<nav>
+  <span class="brand">CT LLC Tracker</span>
+  <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+  <button class="nav-btn" data-view="profile">Profile</button>
+  <button class="nav-btn" data-view="obligations">Obligations</button>
+  <button class="nav-btn" data-view="annual-report">Annual Report</button>
+  <button class="nav-btn" data-view="tax">Tax Calendar</button>
+  <button class="nav-btn" data-view="history">History</button>
+</nav>
+
+<main>
+
+  <!-- ============================================================ DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div id="dash-alerts"></div>
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div style="font-size:23px; font-weight:700;" id="dash-llc-name">Your LLC</div>
+          <div style="color:var(--muted); font-size:13px; margin-top:4px;" id="dash-llc-meta"></div>
+        </div>
+        <div id="dash-standing-badge"></div>
+      </div>
+    </div>
+    <div class="grid-3" id="dash-stats" style="margin-bottom:16px;"></div>
+    <div class="card">
+      <div class="card-title">Upcoming Deadlines</div>
+      <div id="dash-deadlines"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Compliance Overview</div>
+      <div id="dash-summary"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ PROFILE -->
+  <div class="view" id="view-profile">
+    <div class="section-heading">
+      <h2>LLC Profile</h2>
+      <button class="btn btn-primary btn-sm" onclick="saveProfile()">Save Changes</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Business Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>LLC Name</label>
+          <input type="text" id="p-name" placeholder="My Company LLC">
+        </div>
+        <div class="form-group">
+          <label>Formation Date</label>
+          <input type="date" id="p-formed">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Federal EIN</label>
+          <input type="text" id="p-ein" placeholder="XX-XXXXXXX">
+        </div>
+        <div class="form-group">
+          <label>NAICS Code</label>
+          <input type="text" id="p-naics" placeholder="e.g. 541310">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Principal Business Address (CT)</label>
+        <input type="text" id="p-address" placeholder="123 Main St, Hartford, CT 06103">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Primary Email (for SoS reminders)</label>
+          <input type="email" id="p-email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label>Tax Classification</label>
+          <select id="p-taxclass">
+            <option value="disregarded">Single-Member — Disregarded Entity</option>
+            <option value="partnership">Multi-Member — Partnership (default)</option>
+            <option value="s-corp">S-Corporation Election</option>
+            <option value="c-corp">C-Corporation Election</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Registered Agent</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Agent Name or Company</label>
+          <input type="text" id="p-ra-name" placeholder="Name or company">
+        </div>
+        <div class="form-group">
+          <label>Agent Phone</label>
+          <input type="tel" id="p-ra-phone" placeholder="(860) 555-0100">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Agent CT Address (no PO boxes)</label>
+        <input type="text" id="p-ra-address" placeholder="456 State St, Hartford, CT 06103">
+      </div>
+      <div class="form-group">
+        <label>Agent Email</label>
+        <input type="email" id="p-ra-email" placeholder="agent@example.com">
+      </div>
+      <div class="alert alert-info" style="margin-top:0;">
+        Your registered agent must maintain a Connecticut physical address and be available during normal business hours. Any change to your agent requires a filing with the Secretary of State.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Members / Managers</div>
+      <div id="members-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="addMember()">+ Add Member</button>
+    </div>
+
+    <div style="text-align:right;">
+      <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ OBLIGATIONS -->
+  <div class="view" id="view-obligations">
+    <div class="section-heading">
+      <h2>Obligations</h2>
+      <button class="btn btn-ghost btn-sm" onclick="openAddObligation()">+ Add Custom</button>
+    </div>
+    <div id="obligations-list"></div>
+  </div>
+
+  <!-- ============================================================ ANNUAL REPORT -->
+  <div class="view" id="view-annual-report">
+    <div class="section-heading">
+      <h2>Annual Report Preparation</h2>
+    </div>
+    <div id="ar-alert"></div>
+
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title">Filing Window</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="font-size:12px; color:var(--muted);">Opens</div>
+            <div style="font-size:17px; font-weight:700;">January 1</div>
+          </div>
+          <div style="color:var(--muted); font-size:18px;">→</div>
+          <div>
+            <div style="font-size:12px; color:var(--muted);">Deadline</div>
+            <div style="font-size:17px; font-weight:700; color:var(--warning);">March 31</div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:var(--muted);">Fee</div>
+            <div style="font-size:17px; font-weight:700;">$80</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0; text-align:center;">
+        <div class="card-title">Time Remaining</div>
+        <div id="ar-days-value" style="font-size:3em; font-weight:700; line-height:1;">—</div>
+        <div id="ar-days-label" style="font-size:13px; color:var(--muted); margin-top:4px;">days</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pre-Filing Checklist</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+        Complete each item before filing online at <strong style="color:var(--text);">business.ct.gov</strong>
+      </p>
+      <div id="ar-checklist"></div>
+      <div style="margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px;">
+          <span>Checklist progress</span>
+          <span id="ar-progress-text">0 / 8</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="ar-progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What You Will Update When Filing</div>
+      <ul style="padding-left:20px; font-size:14px; line-height:2; color:var(--muted);">
+        <li>LLC name (confirm correct spelling)</li>
+        <li>Principal office address</li>
+        <li>Registered agent name and CT street address</li>
+        <li>NAICS code (industry classification)</li>
+        <li>Member and manager names and addresses</li>
+        <li>Email address on file with the SoS</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Consequences of Missing the Deadline</div>
+      <div style="font-size:13px; line-height:1.8; color:var(--muted);">
+        <strong style="color:var(--text);">Immediately:</strong> Loss of good standing — affects financing, contracts, and the ability to properly dissolve.<br>
+        <strong style="color:var(--text);">1+ year delinquent:</strong> Secretary of State sends an administrative dissolution notice; 3 months to cure by filing.<br>
+        <strong style="color:var(--text);">Dissolution:</strong> LLC loses all legal authority — cannot enter contracts, sue, or be sued in its name. May lose the business name.<br>
+        <strong style="color:var(--text);">Reinstatement:</strong> $120 reinstatement fee + back filing fees + proof of paid taxes required.
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <a href="https://business.ct.gov/business-services/file-annual-report" target="_blank" class="btn btn-primary">
+        File at CT.gov →
+      </a>
+      <button class="btn btn-success" onclick="openMarkFiled('annual-report')">
+        Mark as Filed
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ TAX CALENDAR -->
+  <div class="view" id="view-tax">
+    <div class="section-heading">
+      <h2>Tax Calendar</h2>
+      <select id="tax-year-select"
+        style="background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:6px 10px; font-size:13px;"
+        onchange="renderTaxCalendar()">
+      </select>
+    </div>
+
+    <div class="alert alert-info">
+      This tracker provides deadline reminders only. Consult a CT-licensed CPA or tax attorney for advice specific to your situation.
+    </div>
+
+    <div class="card">
+      <div class="card-title">Your Tax Classification</div>
+      <div id="tax-classification-note"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Deadline Timeline</div>
+      <div class="timeline" id="tax-timeline"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">CT Pass-Through Entity Tax (CT-PET) — Optional Election</div>
+      <div style="font-size:13px; color:var(--muted); line-height:1.8; margin-bottom:14px;">
+        <strong style="color:var(--text);">Who:</strong> Multi-member LLCs and S-Corps may elect to pay CT-PET at the entity level.<br>
+        <strong style="color:var(--text);">Benefit:</strong> Members can claim a credit on personal CT income tax — a workaround to the federal SALT deduction cap.<br>
+        <strong style="color:var(--text);">Election:</strong> Annual and irrevocable once made for the year. Must be elected each tax year.<br>
+        <strong style="color:var(--text);">Payment due:</strong> March 15 (calendar-year entities).<br>
+        <strong style="color:var(--text);">Extended filing:</strong> September 15 — but payment remains due March 15.
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; font-weight:600;">
+        <input type="checkbox" id="pet-elected" onchange="savePetElection()" style="accent-color:var(--primary); width:16px; height:16px;">
+        CT-PET elected for this tax year
+      </label>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Extension Tracking</div>
+      <div id="extension-tracker"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ HISTORY -->
+  <div class="view" id="view-history">
+    <div class="section-heading">
+      <h2>Filing History</h2>
+      <button class="btn btn-ghost btn-sm" onclick="exportHistory()">Export CSV</button>
+    </div>
+    <div class="card">
+      <div id="history-table-wrap"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ============================================================ MARK AS FILED MODAL -->
+<div class="modal-backdrop hidden" id="modal-filed">
+  <div class="modal">
+    <div class="modal-title" id="modal-filed-title">Mark as Filed</div>
+    <div class="form-group">
+      <label>Date Filed</label>
+      <input type="date" id="filed-date">
+    </div>
+    <div class="form-group">
+      <label>Fee Paid ($)</label>
+      <input type="number" id="filed-fee" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>Confirmation Number (optional)</label>
+      <input type="text" id="filed-confirm" placeholder="e.g. CT-XXXXXXXX">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="filed-notes" placeholder="Any additional notes..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-filed')">Cancel</button>
+      <button class="btn btn-success" onclick="confirmFiled()">Record Filing</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ ADD OBLIGATION MODAL -->
+<div class="modal-backdrop hidden" id="modal-obligation">
+  <div class="modal">
+    <div class="modal-title">Add Custom Obligation</div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="ob-title" placeholder="e.g. Sales &amp; Use Tax Permit Renewal">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="ob-category">
+        <option value="state">State</option>
+        <option value="tax">Tax</option>
+        <option value="federal">Federal</option>
+        <option value="local">Local / Municipal</option>
+        <option value="license">License / Permit</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="ob-due">
+      </div>
+      <div class="form-group">
+        <label>Fee ($)</label>
+        <input type="number" id="ob-fee" placeholder="0.00" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Recurrence</label>
+      <select id="ob-recurrence">
+        <option value="once">One-time</option>
+        <option value="annual">Annual</option>
+        <option value="quarterly">Quarterly</option>
+        <option value="monthly">Monthly</option>
+        <option value="continuous">Continuous / Ongoing</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Filing URL (optional)</label>
+      <input type="url" id="ob-url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Notes / Description</label>
+      <textarea id="ob-notes" placeholder="Details, instructions, reminders..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-obligation')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveObligation()">Add Obligation</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+
+const STORAGE_KEY = 'ct_llc_tracker_v1';
+
+const DEFAULT_OBLIGATIONS = [
+  {
+    id: 'annual-report',
+    title: 'Annual Report — Secretary of State',
+    description: 'Filed online at business.ct.gov. Confirm or update: registered agent, business address, NAICS code, member/manager info, and email on file. Cannot be filed by mail.',
+    category: 'state',
+    recurrence: 'annual',
+    dueDateRule: { month: 3, day: 31 },
+    fee: 80,
+    filingUrl: 'https://business.ct.gov/business-services/file-annual-report',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
+  },
+  {
+    id: 'ct-1065',
+    title: 'CT-1065 / CT-1120SI — Pass-Through Entity Tax Return',
+    description: 'Connecticut composite income tax return for multi-member LLCs (partnerships) and S-Corps. Payment due March 15. Extension to file available until September 15 — but payment is still due March 15. Not required for single-member disregarded entities.',
+    category: 'tax',
+    recurrence: 'annual',
+    dueDateRule: { month: 3, day: 15 },
+    fee: null,
+    filingUrl: 'https://portal.ct.gov/drs/taxes/pass-through-entity/tax-information',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
+  },
+  {
+    id: 'registered-agent',
+    title: 'Registered Agent — Maintain Current on File',
+    description: 'A registered agent with a Connecticut physical address (no PO boxes) must be on file with the SoS at all times. Agent must be available during normal business hours. Any change requires filing a Statement of Change with the SoS.',
+    category: 'state',
+    recurrence: 'continuous',
+    dueDateRule: null,
+    fee: null,
+    filingUrl: 'https://business.ct.gov',
+    required: true,
+    status: 'current',
+    isBuiltIn: true,
+    history: []
+  },
+  {
+    id: 'drs-registration',
+    title: 'CT DRS Registration — State Tax ID',
+    description: 'One-time registration with the Connecticut Department of Revenue Services to obtain a CT Tax ID number. Required to file state taxes and report payroll. Fee: $100.',
+    category: 'tax',
+    recurrence: 'once',
+    dueDateRule: null,
+    fee: 100,
+    filingUrl: 'https://portal.ct.gov/drs',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
+  }
+];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {
+    profile: {
+      name: '',
+      formationDate: '',
+      ein: '',
+      naics: '',
+      address: '',
+      email: '',
+      taxClass: 'disregarded',
+      registeredAgent: { name: '', address: '', phone: '', email: '' },
+      members: []
+    },
+    obligations: JSON.parse(JSON.stringify(DEFAULT_OBLIGATIONS)),
+    taxSettings: { petElected: false, extensionFiled: false },
+    arChecklist: {},
+    history: []
+  };
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+let data = loadData();
+let currentFilingId = null;
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function daysUntil(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.round((d - now) / 86400000);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function nextAnnualDate(month, day) {
+  const now = new Date();
+  let year = now.getFullYear();
+  const target = new Date(year, month - 1, day);
+  if (target < now) target.setFullYear(year + 1);
+  return target.toISOString().split('T')[0];
+}
+
+function getObligationDueDate(ob) {
+  if (!ob.dueDateRule) return ob.customDue || null;
+  if (ob.recurrence === 'annual') return nextAnnualDate(ob.dueDateRule.month, ob.dueDateRule.day);
+  return ob.customDue || null;
+}
+
+function computeStatus(ob) {
+  if (ob.status === 'not-applicable') return 'not-applicable';
+  if (ob.recurrence === 'continuous') return ob.status === 'current' ? 'current' : 'needs-attention';
+  if (ob.recurrence === 'once' && ob.status === 'filed') return 'filed';
+  const due = getObligationDueDate(ob);
+  if (!due) return ob.status || 'pending';
+  // Check if already filed for the current period
+  if (ob.status === 'filed' && ob.history && ob.history.length) {
+    const lastFiled = ob.history[ob.history.length - 1];
+    const lastDate = new Date(lastFiled.date + 'T00:00:00');
+    const nextDue = new Date(due + 'T00:00:00');
+    // If last filed date is after the previous year's due date, still current
+    const prevDue = new Date(nextDue);
+    prevDue.setFullYear(prevDue.getFullYear() - 1);
+    if (lastDate >= prevDue) return 'filed';
+  }
+  const days = daysUntil(due);
+  if (days < 0) return 'overdue';
+  if (days <= 30) return 'due-soon';
+  if (days <= 90) return 'upcoming';
+  return 'pending';
+}
+
+const STATUS_LABELS = {
+  current: 'Current', filed: 'Filed', pending: 'Pending',
+  'not-applicable': 'N/A', overdue: 'OVERDUE',
+  'due-soon': 'Due Soon', upcoming: 'Upcoming',
+  'needs-attention': 'Needs Attention'
+};
+const STATUS_BADGE = {
+  current: 'badge-success', filed: 'badge-success', pending: 'badge-muted',
+  'not-applicable': 'badge-muted', overdue: 'badge-danger',
+  'due-soon': 'badge-warning', upcoming: 'badge-primary',
+  'needs-attention': 'badge-warning'
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    renderView(btn.dataset.view);
+  });
+});
+
+function renderView(name) {
+  const map = {
+    dashboard: renderDashboard,
+    profile: renderProfile,
+    obligations: renderObligations,
+    'annual-report': renderAnnualReport,
+    tax: renderTaxCalendar,
+    history: renderHistory
+  };
+  if (map[name]) map[name]();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+
+function renderDashboard() {
+  const p = data.profile;
+  document.getElementById('dash-llc-name').textContent = p.name || 'Your LLC';
+  const formed = p.formationDate ? 'Formed ' + formatDate(p.formationDate) + ' · Connecticut LLC' : 'Connecticut LLC';
+  document.getElementById('dash-llc-meta').textContent = formed;
+
+  // Standing badge based on annual report status
+  const arOb = data.obligations.find(o => o.id === 'annual-report');
+  const arStatus = computeStatus(arOb);
+  let standingHtml;
+  if (arStatus === 'overdue') {
+    standingHtml = '<span class="badge badge-danger">At Risk</span>';
+  } else if (arStatus === 'filed') {
+    standingHtml = '<span class="badge badge-success">Good Standing</span>';
+  } else {
+    standingHtml = '<span class="badge badge-warning">Annual Report Pending</span>';
+  }
+  document.getElementById('dash-standing-badge').innerHTML = standingHtml;
+
+  // Alerts
+  let alerts = '';
+  if (!p.name) {
+    alerts += '<div class="alert alert-info">👋 Welcome! Fill out the <strong>Profile</strong> tab to get started.</div>';
+  }
+  data.obligations.forEach(ob => {
+    const s = computeStatus(ob);
+    const due = getObligationDueDate(ob);
+    if (s === 'overdue') {
+      alerts += `<div class="alert alert-danger">⚠ <strong>${ob.title}</strong> is overdue${due ? ' (was due ' + formatDate(due) + ')' : ''}. File immediately to preserve good standing.</div>`;
+    } else if (s === 'due-soon') {
+      const days = daysUntil(due);
+      alerts += `<div class="alert alert-warning">⏰ <strong>${ob.title}</strong> is due in ${days} day${days === 1 ? '' : 's'} on ${formatDate(due)}.</div>`;
+    }
+  });
+  document.getElementById('dash-alerts').innerHTML = alerts;
+
+  // Stat cards
+  const actionRequired = data.obligations.filter(o => ['overdue', 'due-soon', 'needs-attention'].includes(computeStatus(o))).length;
+  const current = data.obligations.filter(o => ['filed', 'current', 'not-applicable'].includes(computeStatus(o))).length;
+  const arDue = getObligationDueDate(arOb);
+  const arDays = arDue ? daysUntil(arDue) : null;
+  const arColor = arDays !== null && arDays < 0 ? 'var(--danger)' : arDays !== null && arDays <= 30 ? 'var(--warning)' : 'var(--text)';
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value" style="color:${actionRequired > 0 ? 'var(--danger)' : 'var(--success)'}">${actionRequired}</div>
+      <div class="stat-label">Action Required</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--success)">${current}</div>
+      <div class="stat-label">Obligations Current</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:${arColor}">${arDays !== null ? Math.abs(arDays) : '—'}</div>
+      <div class="stat-label">${arDays !== null && arDays < 0 ? 'Days Overdue (Annual Report)' : 'Days to Annual Report'}</div>
+    </div>
+  `;
+
+  // Upcoming deadlines
+  const withDates = data.obligations
+    .filter(ob => getObligationDueDate(ob))
+    .map(ob => ({ ob, due: getObligationDueDate(ob), days: daysUntil(getObligationDueDate(ob)) }))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5);
+
+  if (!withDates.length) {
+    document.getElementById('dash-deadlines').innerHTML = '<p style="color:var(--muted); font-size:13px;">No upcoming deadlines.</p>';
+  } else {
+    document.getElementById('dash-deadlines').innerHTML = withDates.map(({ ob, due, days }) => {
+      const s = computeStatus(ob);
+      const col = s === 'overdue' ? 'var(--danger)' : s === 'due-soon' ? 'var(--warning)' : 'var(--primary)';
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-weight:600; font-size:14px;">${ob.title}</div>
+            <div style="font-size:12px; color:var(--muted);">${formatDate(due)}${ob.fee ? ' · $' + ob.fee : ''}</div>
+          </div>
+          <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+            <div style="font-size:22px; font-weight:700; color:${col}">${Math.abs(days)}</div>
+            <div style="font-size:11px; color:var(--muted);">${days < 0 ? 'days overdue' : 'days'}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Summary
+  const total = data.obligations.length;
+  const pct = Math.round(current / total * 100);
+  document.getElementById('dash-summary').innerHTML = `
+    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:7px;">
+      <span>${current} of ${total} obligations current</span>
+      <span>${pct}%</span>
+    </div>
+    <div class="progress-bar" style="margin-bottom:16px;">
+      <div class="progress-fill" style="width:${pct}%; background:${pct === 100 ? 'var(--success)' : pct >= 60 ? 'var(--warning)' : 'var(--danger)'}"></div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      ${data.obligations.map(ob => {
+        const s = computeStatus(ob);
+        const short = ob.title.split('—')[0].split('/')[0].trim();
+        return `<span class="badge ${STATUS_BADGE[s]}">${short}: ${STATUS_LABELS[s]}</span>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+
+function renderProfile() {
+  const p = data.profile;
+  document.getElementById('p-name').value = p.name || '';
+  document.getElementById('p-formed').value = p.formationDate || '';
+  document.getElementById('p-ein').value = p.ein || '';
+  document.getElementById('p-naics').value = p.naics || '';
+  document.getElementById('p-address').value = p.address || '';
+  document.getElementById('p-email').value = p.email || '';
+  document.getElementById('p-taxclass').value = p.taxClass || 'disregarded';
+  const ra = p.registeredAgent || {};
+  document.getElementById('p-ra-name').value = ra.name || '';
+  document.getElementById('p-ra-phone').value = ra.phone || '';
+  document.getElementById('p-ra-address').value = ra.address || '';
+  document.getElementById('p-ra-email').value = ra.email || '';
+  renderMembers();
+}
+
+function renderMembers() {
+  const members = data.profile.members || [];
+  document.getElementById('members-list').innerHTML = members.length
+    ? members.map((m, i) => `
+        <div class="member-row">
+          <input type="text" value="${escHtml(m.name || '')}" placeholder="Member name"
+            oninput="data.profile.members[${i}].name = this.value">
+          <input type="text" class="pct-input" value="${escHtml(m.ownership || '')}" placeholder="% share"
+            oninput="data.profile.members[${i}].ownership = this.value">
+          <button class="btn btn-ghost btn-sm" onclick="removeMember(${i})">✕</button>
+        </div>`).join('')
+    : '<p style="color:var(--muted); font-size:13px; margin-bottom:8px;">No members added yet.</p>';
+}
+
+function addMember() {
+  if (!data.profile.members) data.profile.members = [];
+  data.profile.members.push({ name: '', ownership: '' });
+  renderMembers();
+}
+
+function removeMember(i) {
+  data.profile.members.splice(i, 1);
+  renderMembers();
+}
+
+function saveProfile() {
+  data.profile.name = document.getElementById('p-name').value.trim();
+  data.profile.formationDate = document.getElementById('p-formed').value;
+  data.profile.ein = document.getElementById('p-ein').value.trim();
+  data.profile.naics = document.getElementById('p-naics').value.trim();
+  data.profile.address = document.getElementById('p-address').value.trim();
+  data.profile.email = document.getElementById('p-email').value.trim();
+  data.profile.taxClass = document.getElementById('p-taxclass').value;
+  data.profile.registeredAgent = {
+    name: document.getElementById('p-ra-name').value.trim(),
+    phone: document.getElementById('p-ra-phone').value.trim(),
+    address: document.getElementById('p-ra-address').value.trim(),
+    email: document.getElementById('p-ra-email').value.trim()
+  };
+  saveData();
+  document.querySelectorAll('[onclick="saveProfile()"]').forEach(btn => {
+    const orig = btn.textContent;
+    btn.textContent = 'Saved!';
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+  });
+}
+
+// ============================================================
+// OBLIGATIONS
+// ============================================================
+
+const CAT_BADGE = { state: 'badge-primary', tax: 'badge-warning', federal: 'badge-danger', local: 'badge-muted', license: 'badge-muted', other: 'badge-muted' };
+
+function renderObligations() {
+  document.getElementById('obligations-list').innerHTML = data.obligations.map((ob, i) => {
+    const s = computeStatus(ob);
+    const due = getObligationDueDate(ob);
+    let dueText = '';
+    if (ob.recurrence === 'continuous') dueText = 'Ongoing — must be maintained';
+    else if (ob.recurrence === 'once') dueText = ob.customDue ? 'Due: ' + formatDate(ob.customDue) : 'One-time';
+    else if (due) dueText = 'Next due: ' + formatDate(due) + ' (' + daysUntil(due) + ' days)';
+
+    const feeText = ob.fee != null ? ' · $' + ob.fee : '';
+    const histHtml = ob.history && ob.history.length
+      ? `<div style="margin-top:12px;">
+           <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Filing History</div>
+           ${ob.history.slice(-3).reverse().map(h =>
+             `<div style="font-size:12px; color:var(--muted); padding:5px 0; border-bottom:1px solid var(--border);">
+                ${formatDate(h.date)}${h.confirmNum ? ' · Conf: ' + escHtml(h.confirmNum) : ''}${h.fee ? ' · $' + h.fee : ''}${h.notes ? ' · ' + escHtml(h.notes) : ''}
+              </div>`).join('')}
+         </div>` : '';
+
+    return `
+      <div class="obligation-item" id="ob-item-${i}" onclick="toggleObligation(${i})">
+        <div class="obligation-header">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="obligation-title">${ob.title}</span>
+              <span class="badge ${CAT_BADGE[ob.category] || 'badge-muted'}" style="font-size:10px;">${ob.category}</span>
+            </div>
+            <div class="obligation-due">${dueText}${feeText}</div>
+          </div>
+          <span class="badge ${STATUS_BADGE[s]}">${STATUS_LABELS[s]}</span>
+        </div>
+        <div class="obligation-detail">
+          <p style="font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.6;">${ob.description || ''}</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            ${ob.filingUrl ? `<a href="${ob.filingUrl}" target="_blank" class="btn btn-ghost btn-sm">Open Filing Portal →</a>` : ''}
+            ${ob.recurrence !== 'continuous' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); openMarkFiled('${ob.id}')">Mark as Filed</button>` : ''}
+            ${ob.recurrence === 'continuous' ? `
+              <button class="btn btn-sm ${s === 'current' ? 'btn-ghost' : 'btn-success'}" onclick="event.stopPropagation(); toggleCurrent(${i})">
+                ${s === 'current' ? 'Mark Needs Attention' : 'Mark Current'}
+              </button>` : ''}
+            ${!ob.isBuiltIn ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteObligation(${i})">Delete</button>` : ''}
+          </div>
+          ${histHtml}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleObligation(i) {
+  document.getElementById('ob-item-' + i).classList.toggle('expanded');
+}
+
+function toggleCurrent(i) {
+  const ob = data.obligations[i];
+  ob.status = ob.status === 'current' ? 'needs-attention' : 'current';
+  saveData();
+  renderObligations();
+}
+
+function deleteObligation(i) {
+  if (confirm('Delete this obligation?')) {
+    data.obligations.splice(i, 1);
+    saveData();
+    renderObligations();
+  }
+}
+
+function openAddObligation() {
+  ['ob-title','ob-url','ob-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ob-fee').value = '';
+  document.getElementById('ob-due').value = '';
+  document.getElementById('modal-obligation').classList.remove('hidden');
+}
+
+function saveObligation() {
+  const title = document.getElementById('ob-title').value.trim();
+  if (!title) { alert('Please enter a title.'); return; }
+  data.obligations.push({
+    id: 'custom-' + Date.now(),
+    title,
+    description: document.getElementById('ob-notes').value.trim(),
+    category: document.getElementById('ob-category').value,
+    recurrence: document.getElementById('ob-recurrence').value,
+    customDue: document.getElementById('ob-due').value || null,
+    dueDateRule: null,
+    fee: parseFloat(document.getElementById('ob-fee').value) || null,
+    filingUrl: document.getElementById('ob-url').value.trim() || null,
+    required: false,
+    status: 'pending',
+    isBuiltIn: false,
+    history: []
+  });
+  saveData();
+  closeModal('modal-obligation');
+  renderObligations();
+}
+
+// ============================================================
+// ANNUAL REPORT
+// ============================================================
+
+const AR_CHECKLIST = [
+  { id: 'ar1', text: 'Confirm LLC name spelling matches the Secretary of State records exactly' },
+  { id: 'ar2', text: 'Verify registered agent name and Connecticut street address are current' },
+  { id: 'ar3', text: 'Confirm principal business address is accurate' },
+  { id: 'ar4', text: 'Verify NAICS code correctly describes your current business activity' },
+  { id: 'ar5', text: 'Review all member and manager names and addresses for accuracy' },
+  { id: 'ar6', text: 'Confirm the email address on file with the SoS is active and monitored' },
+  { id: 'ar7', text: 'Prepare $80 payment method (credit or debit card accepted online)' },
+  { id: 'ar8', text: 'Have CT.gov Business One Stop login credentials available' }
+];
+
+function renderAnnualReport() {
+  const arOb = data.obligations.find(o => o.id === 'annual-report');
+  const due = getObligationDueDate(arOb);
+  const days = due ? daysUntil(due) : null;
+  const s = computeStatus(arOb);
+
+  let alertHtml = '';
+  if (s === 'filed') {
+    const last = arOb.history && arOb.history.length ? arOb.history[arOb.history.length - 1] : null;
+    alertHtml = `<div class="alert alert-success">Annual Report filed for this period${last ? ' on ' + formatDate(last.date) : ''}. Next filing window opens January 1.</div>`;
+  } else if (days !== null && days < 0) {
+    alertHtml = `<div class="alert alert-danger">OVERDUE by ${Math.abs(days)} days! File immediately at business.ct.gov to avoid administrative dissolution proceedings.</div>`;
+  } else if (days !== null && days <= 30) {
+    alertHtml = `<div class="alert alert-warning">Due in ${days} day${days === 1 ? '' : 's'} (${formatDate(due)}). Complete checklist below and file at business.ct.gov.</div>`;
+  } else {
+    const now = new Date();
+    const windowOpen = now.getMonth() <= 2; // Jan, Feb, Mar
+    alertHtml = windowOpen
+      ? `<div class="alert alert-info">Filing window is open now. Due by March 31. File at business.ct.gov.</div>`
+      : `<div class="alert alert-info">Filing window opens January 1. Deadline is March 31 each year.</div>`;
+  }
+  document.getElementById('ar-alert').innerHTML = alertHtml;
+
+  const col = days !== null && days < 0 ? 'var(--danger)' : days !== null && days <= 30 ? 'var(--warning)' : 'var(--text)';
+  document.getElementById('ar-days-value').textContent = days !== null ? Math.abs(days) : '—';
+  document.getElementById('ar-days-value').style.color = col;
+  document.getElementById('ar-days-label').textContent = days !== null && days < 0 ? 'days overdue' : 'days remaining';
+
+  const checks = data.arChecklist || {};
+  document.getElementById('ar-checklist').innerHTML = AR_CHECKLIST.map(item => `
+    <div class="checklist-item">
+      <input type="checkbox" id="chk-${item.id}" ${checks[item.id] ? 'checked' : ''}
+        onchange="toggleArCheck('${item.id}', this.checked)">
+      <span class="check-text ${checks[item.id] ? 'done' : ''}" id="chk-text-${item.id}">${item.text}</span>
+    </div>`).join('');
+
+  updateArProgress();
+}
+
+function toggleArCheck(id, checked) {
+  data.arChecklist[id] = checked;
+  const el = document.getElementById('chk-text-' + id);
+  if (el) el.classList.toggle('done', checked);
+  saveData();
+  updateArProgress();
+}
+
+function updateArProgress() {
+  const done = AR_CHECKLIST.filter(i => data.arChecklist[i.id]).length;
+  const total = AR_CHECKLIST.length;
+  document.getElementById('ar-progress-text').textContent = `${done} / ${total}`;
+  const pct = Math.round(done / total * 100);
+  const fill = document.getElementById('ar-progress-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct === 100 ? 'var(--success)' : 'var(--primary)';
+}
+
+// ============================================================
+// TAX CALENDAR
+// ============================================================
+
+function renderTaxCalendar() {
+  const sel = document.getElementById('tax-year-select');
+  if (!sel.options.length) {
+    const y = new Date().getFullYear();
+    for (let yr = y - 1; yr <= y + 2; yr++) {
+      const opt = document.createElement('option');
+      opt.value = yr; opt.textContent = yr;
+      if (yr === y) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+
+  const year = parseInt(sel.value);
+  const taxClass = data.profile.taxClass || 'disregarded';
+  const isMulti = taxClass !== 'disregarded' && taxClass !== 'c-corp';
+  const isPET = data.taxSettings.petElected;
+  const isExtended = data.taxSettings.extensionFiled;
+
+  const classNotes = {
+    disregarded: '<strong>Single-Member Disregarded Entity:</strong> CT-1065 not required. Report LLC income and loss directly on your personal CT-1040 and federal Schedule C. The Annual Report is still required annually.',
+    partnership: '<strong>Multi-Member Partnership (default):</strong> Must file Form CT-1065/CT-1120SI each year. Payment due March 15. Optional CT-PET election available — can benefit members by providing a state tax credit.',
+    's-corp': '<strong>S-Corporation Election:</strong> File Form CT-1120SI. Payment due March 15. CT-PET election available.',
+    'c-corp': '<strong>C-Corporation Election:</strong> File Form CT-1120. Different deadline and tax structure. Annual Report still required. Consult a CPA for C-Corp obligations.'
+  };
+  document.getElementById('tax-classification-note').innerHTML = `
+    <p style="font-size:14px; line-height:1.7;">${classNotes[taxClass]}</p>
+    <p style="font-size:12px; color:var(--muted); margin-top:10px;">
+      Update classification in <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-view=profile]').click()">Profile tab</button>
+    </p>`;
+
+  const now = new Date();
+  const items = [
+    { date: `${year}-01-01`, title: 'Annual Report Window Opens', desc: 'File between January 1 and March 31. Fee: $80. Online only.', cls: 'info' },
+    isMulti && { date: `${year}-03-15`, title: 'CT-1065 / CT-1120SI Payment Due', desc: 'Pass-through entity return payment due. Extension to file (not pay) available to September 15.', cls: 'hard' },
+    isPET && isMulti && { date: `${year}-03-15`, title: 'CT-PET Payment Due', desc: 'Pass-Through Entity Tax payment due if election was made for this year.', cls: 'hard' },
+    { date: `${year}-03-31`, title: 'Annual Report Deadline', desc: 'Last day to file the Annual Report with the Secretary of State. $80 fee. Online only.', cls: 'hard' },
+    isMulti && { date: `${year}-09-15`, title: isExtended ? 'CT-1065 Extended Filing Deadline' : 'CT-1065 Extension Deadline', desc: isExtended ? 'Extended filing due. Note: payment was still due March 15.' : 'Available deadline if extension was filed. Payment still due March 15.', cls: isExtended ? 'hard' : 'info' },
+  ].filter(Boolean);
+
+  document.getElementById('tax-timeline').innerHTML = items.map(item => {
+    const d = new Date(item.date + 'T00:00:00');
+    const isPast = d < now;
+    const dotCls = isPast ? 'done' : item.cls === 'hard' ? 'hard' : item.cls === 'info' ? 'upcoming' : 'upcoming';
+    const titleColor = isPast ? 'var(--success)' : item.cls === 'hard' ? 'var(--danger)' : 'var(--warning)';
+    return `
+      <div class="tl-item ${dotCls}">
+        <div class="tl-date">${formatDate(item.date)}</div>
+        <div class="tl-title" style="color:${titleColor}">${item.title}</div>
+        <div class="tl-desc">${item.desc}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('pet-elected').checked = isPET;
+
+  document.getElementById('extension-tracker').innerHTML = `
+    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; font-weight:600; margin-bottom:14px;">
+      <input type="checkbox" id="ext-filed" ${isExtended ? 'checked' : ''}
+        onchange="data.taxSettings.extensionFiled=this.checked; saveData(); renderTaxCalendar()"
+        style="accent-color:var(--primary); width:16px; height:16px;">
+      CT-1065 extension filed (extends filing deadline to September 15)
+    </label>
+    <div class="alert alert-warning" style="margin-bottom:0;">
+      <strong>Important:</strong> Filing an extension does NOT extend the payment deadline. All tax payments remain due March 15 regardless of any extension.
+    </div>`;
+}
+
+function savePetElection() {
+  data.taxSettings.petElected = document.getElementById('pet-elected').checked;
+  saveData();
+  renderTaxCalendar();
+}
+
+// ============================================================
+// FILING HISTORY
+// ============================================================
+
+function renderHistory() {
+  const entries = data.history || [];
+  if (!entries.length) {
+    document.getElementById('history-table-wrap').innerHTML =
+      '<p style="color:var(--muted); font-size:13px; text-align:center; padding:24px 0;">No filings recorded yet. Use "Mark as Filed" on any obligation.</p>';
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+  document.getElementById('history-table-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Date Filed</th><th>Obligation</th><th>Fee Paid</th><th>Confirmation #</th><th>Notes</th>
+      </tr></thead>
+      <tbody>
+        ${sorted.map(h => `
+          <tr>
+            <td>${formatDate(h.date)}</td>
+            <td>${escHtml(h.title)}</td>
+            <td>${h.fee ? '$' + parseFloat(h.fee).toFixed(2) : '—'}</td>
+            <td>${escHtml(h.confirmNum || '—')}</td>
+            <td style="color:var(--muted)">${escHtml(h.notes || '')}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function exportHistory() {
+  const entries = data.history || [];
+  if (!entries.length) { alert('No history to export.'); return; }
+  const rows = [['Date Filed', 'Obligation', 'Fee Paid', 'Confirmation #', 'Notes']];
+  [...entries].sort((a, b) => new Date(b.date) - new Date(a.date))
+    .forEach(h => rows.push([h.date, h.title, h.fee || '', h.confirmNum || '', h.notes || '']));
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ct-llc-filing-history.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// MARK AS FILED MODAL
+// ============================================================
+
+function openMarkFiled(obId) {
+  currentFilingId = obId;
+  const ob = data.obligations.find(o => o.id === obId);
+  document.getElementById('modal-filed-title').textContent = 'Mark as Filed: ' + (ob ? ob.title.split('—')[0].split('/')[0].trim() : '');
+  document.getElementById('filed-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('filed-fee').value = ob && ob.fee != null ? ob.fee : '';
+  document.getElementById('filed-confirm').value = '';
+  document.getElementById('filed-notes').value = '';
+  document.getElementById('modal-filed').classList.remove('hidden');
+}
+
+function confirmFiled() {
+  const ob = data.obligations.find(o => o.id === currentFilingId);
+  if (!ob) return;
+  const entry = {
+    date: document.getElementById('filed-date').value,
+    fee: document.getElementById('filed-fee').value,
+    confirmNum: document.getElementById('filed-confirm').value.trim(),
+    notes: document.getElementById('filed-notes').value.trim(),
+    title: ob.title
+  };
+  if (!entry.date) { alert('Please enter a filing date.'); return; }
+  if (!ob.history) ob.history = [];
+  ob.history.push(entry);
+  ob.status = 'filed';
+  if (!data.history) data.history = [];
+  data.history.push(entry);
+  saveData();
+  closeModal('modal-filed');
+  const activeView = document.querySelector('.nav-btn.active')?.dataset?.view;
+  if (activeView) renderView(activeView);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+// Close modals on backdrop click
+['modal-filed', 'modal-obligation'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) closeModal(id);
+  });
+});
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+renderDashboard();
+</script>
+</body>
+</html>
