@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CT LLC Compliance Tracker</title>
+<title>Alchemy Dynamics — CT LLC Compliance Tracker</title>
 <style>
 /* ============================================================
    RESET & BASE
@@ -329,6 +329,48 @@ tr:hover td { background: var(--surface2); }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
 
 .hidden { display: none !important; }
+
+/* ---- STARTUP CHECKLIST ---- */
+.startup-section { margin-bottom: 24px; }
+.startup-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.startup-section-title { font-size: 15px; font-weight: 700; }
+.startup-section-progress { font-size: 12px; color: var(--muted); }
+.startup-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 12px; border-radius: 8px;
+  margin-bottom: 4px; cursor: pointer;
+  transition: background 0.12s;
+}
+.startup-item:hover { background: var(--surface2); }
+.startup-item input[type="checkbox"] {
+  flex-shrink: 0; width: 17px; height: 17px; margin-top: 2px;
+  cursor: pointer; accent-color: var(--success);
+}
+.startup-item-body { flex: 1; min-width: 0; }
+.startup-item-title { font-size: 14px; font-weight: 500; line-height: 1.4; }
+.startup-item-title.done { text-decoration: line-through; color: var(--muted); }
+.startup-item-hint { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+.startup-item-hint a { color: var(--primary); text-decoration: none; }
+.startup-item-hint a:hover { text-decoration: underline; }
+.priority-critical { border-left: 3px solid var(--danger); padding-left: 9px; }
+.priority-important { border-left: 3px solid var(--warning); padding-left: 9px; }
+.priority-consider  { border-left: 3px solid var(--border); padding-left: 9px; }
+.priority-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  margin-right: 5px; flex-shrink: 0; margin-top: 5px;
+}
+.dot-critical { background: var(--danger); }
+.dot-important { background: var(--warning); }
+.dot-consider  { background: var(--muted); }
+.startup-legend {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-size: 12px; color: var(--muted); margin-bottom: 16px;
+}
+.startup-legend span { display: flex; align-items: center; gap: 5px; }
 </style>
 </head>
 <body>
@@ -341,6 +383,7 @@ tr:hover td { background: var(--surface2); }
   <button class="nav-btn" data-view="obligations">Obligations</button>
   <button class="nav-btn" data-view="annual-report">Annual Report</button>
   <button class="nav-btn" data-view="tax">Tax Calendar</button>
+  <button class="nav-btn" data-view="startup">Startup</button>
   <button class="nav-btn" data-view="history">History</button>
 </nav>
 
@@ -589,6 +632,29 @@ tr:hover td { background: var(--surface2); }
     </div>
   </div>
 
+  <!-- ============================================================ STARTUP CHECKLIST -->
+  <div class="view" id="view-startup">
+    <div class="section-heading">
+      <h2>Startup Checklist</h2>
+      <div id="startup-overall-progress" style="font-size:13px; color:var(--muted);"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:7px;">
+        <span id="startup-progress-label">Overall progress</span>
+        <span id="startup-progress-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="startup-progress-fill" style="width:0%"></div></div>
+      <div class="startup-legend" style="margin-top:14px; margin-bottom:0;">
+        <span><span class="priority-dot dot-critical"></span>Critical — do first</span>
+        <span><span class="priority-dot dot-important"></span>Important — do soon</span>
+        <span><span class="priority-dot dot-consider"></span>Consider — when ready</span>
+      </div>
+    </div>
+
+    <div id="startup-checklist-body"></div>
+  </div>
+
   <!-- ============================================================ HISTORY -->
   <div class="view" id="view-history">
     <div class="section-heading">
@@ -767,6 +833,34 @@ const DEFAULT_OBLIGATIONS = [
     history: []
   },
   {
+    id: 'sut-permit',
+    title: 'CT Sales & Use Tax Permit',
+    description: 'One-time permit required before collecting sales tax from customers in CT. Obtained through CT DRS registration. Must be active before your first taxable sale. Post the permit at your place of business (or keep on file for online/service businesses).',
+    category: 'state',
+    recurrence: 'once',
+    dueDateRule: null,
+    fee: 0,
+    filingUrl: 'https://portal.ct.gov/drs/taxes/sales-use-tax/information',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
+  },
+  {
+    id: 'uspto-trademark',
+    title: 'USPTO Trademark Application — ALCHEMY DYNAMICS',
+    description: 'File word mark "ALCHEMY DYNAMICS" under Section 1(b) Intent-to-Use basis. Primary class: Class 42 (SaaS, AI as a service, tech consulting, computer programming). Fee: $350/class base using ID Manual language. File at trademarkcenter.uspto.gov. After receiving Notice of Allowance, file Statement of Use within 6 months (extendable up to 3 years). Conduct full clearance search at tmsearch.uspto.gov first.',
+    category: 'federal',
+    recurrence: 'once',
+    dueDateRule: null,
+    fee: 350,
+    filingUrl: 'https://trademarkcenter.uspto.gov',
+    required: true,
+    status: 'pending',
+    isBuiltIn: true,
+    history: []
+  },
+  {
     id: 'ct-pet-es',
     title: 'CT-PET ES — Quarterly Estimated Tax Payment',
     description: 'Required if your annual CT pass-through entity tax liability is expected to be $1,000 or more. Pay electronically via myCTDRS using Form CT-PET ES. Due dates: April 15, June 15, September 15, January 15. Underpayment may result in interest and penalties. Each quarterly payment should cover approximately 25% of the estimated annual liability.',
@@ -817,6 +911,7 @@ function loadData() {
     obligations: JSON.parse(JSON.stringify(DEFAULT_OBLIGATIONS)),
     taxSettings: { petElected: false, extensionFiled: false },
     arChecklist: {},
+    startupChecklist: {},
     history: []
   };
 }
@@ -953,6 +1048,7 @@ function renderView(name) {
     obligations: renderObligations,
     'annual-report': renderAnnualReport,
     tax: renderTaxCalendar,
+    startup: renderStartup,
     history: renderHistory
   };
   if (map[name]) map[name]();
@@ -1414,6 +1510,157 @@ function savePetElection() {
 }
 
 // ============================================================
+// STARTUP CHECKLIST
+// ============================================================
+
+const STARTUP_SECTIONS = [
+  {
+    id: 'legal',
+    title: 'Legal Foundation',
+    icon: '⚖️',
+    items: [
+      { id: 'sl-llc',     priority: 'critical',  done: true,  title: 'Register Alchemy Dynamics LLC with CT Secretary of State', hint: 'Complete. Formation date recorded in Profile.' },
+      { id: 'sl-ein',     priority: 'critical',  title: 'Obtain Federal EIN from IRS', hint: 'Free, takes ~5 minutes online. Required for bank accounts, taxes, and hiring. <a href="https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online" target="_blank">Apply at IRS.gov →</a>' },
+      { id: 'sl-drs',     priority: 'critical',  title: 'Register with CT DRS — Obtain State Tax ID ($100)', hint: 'Required to file CT taxes. Also registers you for Sales & Use Tax. <a href="https://portal.ct.gov/drs" target="_blank">portal.ct.gov/drs →</a>' },
+      { id: 'sl-sut',     priority: 'critical',  title: 'Obtain CT Sales & Use Tax Permit', hint: 'Required before collecting sales tax from customers in CT. Part of DRS registration. Must have this before your first taxable sale.' },
+      { id: 'sl-oa',      priority: 'critical',  title: 'Draft and execute LLC Operating Agreement', hint: 'CT does not require one, but it is essential. Must include: member equity, voting rights, IP assignment clause (all pre-formation and ongoing IP belongs to the LLC), profit/loss allocation, dissolution procedure. Consult a CT business attorney.' },
+      { id: 'sl-ip-asgn', priority: 'critical',  title: 'Execute IP Assignment — transfer all pre-formation IP to the LLC', hint: 'Any domains, code, brand assets, or concepts created before the LLC was formed must be formally assigned to the LLC in writing. This protects the company\'s ownership of its core assets.' },
+      { id: 'sl-boir',    priority: 'important', title: 'Check FinCEN Beneficial Ownership Information Report (BOIR) requirements', hint: 'The Corporate Transparency Act required BOI filings, but enforcement has been subject to ongoing court injunctions. Verify current status and file if required. <a href="https://www.fincen.gov/boi" target="_blank">fincen.gov/boi →</a>' },
+      { id: 'sl-cogs',    priority: 'consider',  title: 'Obtain Certificate of Good Standing from CT SoS', hint: 'Required by some banks and investors. Available at business.ct.gov for a small fee.' }
+    ]
+  },
+  {
+    id: 'ip',
+    title: 'Intellectual Property',
+    icon: '™',
+    items: [
+      { id: 'ip-tm-search',  priority: 'critical',  title: 'Conduct full USPTO clearance search for "ALCHEMY DYNAMICS"', hint: 'Search all live marks, similar-sounding names, and related classes at <a href="https://tmsearch.uspto.gov" target="_blank">tmsearch.uspto.gov</a>. Preliminary search shows no exact conflicts, but a thorough search is required before filing.' },
+      { id: 'ip-tm-word',    priority: 'critical',  title: 'File USPTO trademark: word mark "ALCHEMY DYNAMICS" — Class 42 (ITU basis)', hint: 'Class 42: SaaS, AI as a service, tech consulting, computer programming. File Section 1(b) Intent-to-Use to lock priority date now. Fee: $350/class base. File at <a href="https://trademarkcenter.uspto.gov" target="_blank">trademarkcenter.uspto.gov</a>. Use ID Manual language to avoid $200 surcharge.' },
+      { id: 'ip-tm-cls9',    priority: 'important', title: 'Add Class 9 to trademark application (downloadable software/apps)', hint: 'If Alchemy Dynamics will distribute downloadable software or mobile apps, Class 9 should be added. Can be filed in the same application. Fee: additional $350.' },
+      { id: 'ip-tm-logo',    priority: 'important', title: 'File design/logo trademark once brand mark is finalized', hint: 'File a separate stylized mark application after logo is designed. Word mark (filed first) provides broader protection independently of design.' },
+      { id: 'ip-tm-monitor', priority: 'important', title: 'Set up USPTO trademark monitoring / watch service', hint: 'Monitor for conflicting applications after your mark is published. USPTO TSDR emails are free. Third-party watch services (Corsearch, CompuMark) provide broader coverage.' },
+      { id: 'ip-domains',    priority: 'critical',  done: true, title: 'Secure primary domains: alchemydynamics.com and alchemydynamics.ai', hint: 'Complete. Verify auto-renewal is enabled and WHOIS privacy is on.' },
+      { id: 'ip-domains2',   priority: 'important', title: 'Defensively register alchemydynamics.io, .net, .org', hint: 'Prevents domain squatting and typosquat confusion. Low annual cost for significant brand protection.' },
+      { id: 'ip-nda',        priority: 'important', title: 'Create standard NDA template for contractors and partners', hint: 'All contractors, vendors, and potential partners should sign an NDA before receiving proprietary information. Use mutual NDA for equal disclosure situations.' },
+      { id: 'ip-copyright',  priority: 'important', title: 'Add copyright notices to website, software, and content', hint: 'Copyright is automatic on creation, but notice (© 2025 Alchemy Dynamics LLC) strengthens protection and deters infringement. Register key works at copyright.gov for enhanced statutory damages.' },
+      { id: 'ip-secret',     priority: 'consider',  title: 'Identify and document trade secrets; establish access controls', hint: 'Document proprietary algorithms, processes, and business methods. Implement access controls, encryption, and confidentiality policies. Trade secret protection requires active measures to maintain secrecy.' }
+    ]
+  },
+  {
+    id: 'social',
+    title: 'Digital Presence & Brand',
+    icon: '🌐',
+    items: [
+      { id: 'dig-x',        priority: 'critical',  done: true, title: 'X (Twitter) handle — @AlchemyDynamics secured', hint: 'Secured. Ensure profile is complete with bio, website link, and consistent branding.' },
+      { id: 'dig-yt',       priority: 'critical',  done: true, title: 'YouTube channel — AlchemyDynamics secured', hint: 'Secured. Add channel art, description, and website link.' },
+      { id: 'dig-fb',       priority: 'critical',  done: true, title: 'Facebook page — AlchemyDynamics secured', hint: 'Secured. Complete business page setup with category, contact info, and website.' },
+      { id: 'dig-gh',       priority: 'critical',  done: true, title: 'GitHub organization — AlchemyDynamics secured', hint: 'Secured. Set organization profile, description, website, and pinned repos.' },
+      { id: 'dig-li',       priority: 'critical',  done: true, title: 'LinkedIn company page — AlchemyDynamics secured', hint: 'Secured. Complete with tagline, description, website, logo, and cover image.' },
+      { id: 'dig-email',    priority: 'critical',  title: 'Set up professional email (e.g. Google Workspace or Microsoft 365)', hint: 'Required for credibility. Use @alchemydynamics.com or @alchemydynamics.ai. Google Workspace starts at $6/user/month. Critical before outreach or client contact.' },
+      { id: 'dig-website',  priority: 'critical',  title: 'Launch minimum viable website on alchemydynamics.com', hint: 'At minimum: professional landing page, clear value proposition, contact info, copyright notice, and privacy policy. Can be simple Next.js static site.' },
+      { id: 'dig-logo',     priority: 'important', title: 'Design primary logo and brand identity system', hint: 'Logo, color palette, typography, and usage guidelines. Needed before heavy marketing. Consistent across all platforms.' },
+      { id: 'dig-ai-site',  priority: 'consider',  title: 'Activate alchemydynamics.ai for AI-focused product or landing page', hint: 'The .ai domain signals AI-native focus. Can point to main site initially or serve as a dedicated AI product page.' },
+      { id: 'dig-analytics',priority: 'important', title: 'Set up Google Analytics and Google Search Console', hint: 'Track website traffic, search performance, and conversion from day one. Free.' },
+      { id: 'dig-insta',    priority: 'consider',  title: 'Secure Instagram handle — AlchemyDynamics', hint: 'Defensively register even if not actively posting. Prevents brand squatting.' },
+      { id: 'dig-threads',  priority: 'consider',  title: 'Secure Threads handle — AlchemyDynamics', hint: 'Linked to Instagram account. Secure if Instagram is secured.' }
+    ]
+  },
+  {
+    id: 'financial',
+    title: 'Financial Infrastructure',
+    icon: '🏦',
+    items: [
+      { id: 'fin-bank',    priority: 'critical',  title: 'Open business checking account', hint: 'Requires EIN + Articles of Organization. Keeps business and personal finances separate — critical for LLC liability protection and tax filing. Recommended: Mercury, Chase Business, or local CT bank.' },
+      { id: 'fin-savings', priority: 'important', title: 'Open business savings account — tax reserve fund', hint: 'Set aside 25–30% of revenue for estimated taxes. Target: enough to cover CT-PET ES and federal estimated payments each quarter.' },
+      { id: 'fin-cc',      priority: 'important', title: 'Apply for a business credit card', hint: 'Builds business credit profile separate from personal. Simplifies expense tracking. Pay in full each month. Consider: Brex, Ramp, Chase Ink, or AmEx Business.' },
+      { id: 'fin-acct',    priority: 'important', title: 'Set up accounting software', hint: 'Track income, expenses, and invoices from day one. Options: Wave (free), QuickBooks Online (~$30/mo), or FreshBooks. Must be running before first revenue.' },
+      { id: 'fin-eftps',   priority: 'important', title: 'Register for IRS EFTPS (federal estimated tax payments)', hint: 'Free electronic payment system for federal quarterly estimated taxes. Register at <a href="https://www.eftps.gov" target="_blank">eftps.gov</a>. Federal estimated payments due April 15, June 16, September 15, January 15.' },
+      { id: 'fin-cpa',     priority: 'important', title: 'Engage a CT-licensed CPA for first tax year', hint: 'Especially important for CT-PET election decision, pass-through entity structure, and first-year filings. First-year decisions have long-term consequences.' },
+      { id: 'fin-inv',     priority: 'consider',  title: 'Create invoice template and payment terms policy', hint: 'Net-30 or Net-15 standard. Include late fee language. Use accounting software or a simple branded template.' }
+    ]
+  },
+  {
+    id: 'ops',
+    title: 'Operations',
+    icon: '⚙️',
+    items: [
+      { id: 'ops-contracts', priority: 'critical',  title: 'Create master services agreement (MSA) and statement of work (SOW) templates', hint: 'Essential before taking on any client work. Must include: scope, IP ownership clause (work-for-hire or assignment), payment terms, limitation of liability, governing law (CT). Consult an attorney.' },
+      { id: 'ops-privacy',   priority: 'critical',  title: 'Create Privacy Policy and Terms of Service for website', hint: 'Required if collecting any user data. Privacy policy required by CT law and most ad/analytics platforms. Free generators exist (Termly, Iubenda) but legal review is recommended.' },
+      { id: 'ops-pm',        priority: 'important', title: 'Set up project management system', hint: 'Options: Linear (engineering-focused), Notion (flexible), Jira (enterprise). Establish from day one for client work and internal projects.' },
+      { id: 'ops-docs',      priority: 'important', title: 'Set up document storage and collaboration (Google Drive or similar)', hint: 'Organize: Contracts, Financials, IP, Brand Assets, Client Files. Keep signed documents permanently.' },
+      { id: 'ops-pass',      priority: 'critical',  title: 'Set up password manager for all business accounts', hint: 'Use 1Password, Bitwarden, or similar. All business accounts (domains, hosting, social, financial) should use unique strong passwords and 2FA.' },
+      { id: 'ops-2fa',       priority: 'critical',  title: 'Enable 2FA on all critical accounts (domains, DNS, GitHub, bank, email)', hint: 'Domain hijacking and account takeover are real threats. Enable 2FA immediately on: domain registrar, DNS, GitHub, email, social accounts, bank, and USPTO.' },
+      { id: 'ops-backup',    priority: 'important', title: 'Set up code and data backup strategy', hint: 'GitHub for source code. Off-site backups for any databases or proprietary data. Document recovery procedures.' },
+      { id: 'ops-insure',    priority: 'consider',  title: 'Consider business insurance (General Liability + E&O for tech)', hint: 'Errors & Omissions (E&O) / Professional Liability insurance is important for tech/software services. General Liability protects against property/injury claims. Next Insurance and Hiscox offer affordable small business policies.' }
+    ]
+  }
+];
+
+function renderStartup() {
+  if (!data.startupChecklist) data.startupChecklist = {};
+
+  // Apply pre-done items from definition
+  STARTUP_SECTIONS.forEach(sec => {
+    sec.items.forEach(item => {
+      if (item.done && data.startupChecklist[item.id] === undefined) {
+        data.startupChecklist[item.id] = true;
+      }
+    });
+  });
+
+  const allItems = STARTUP_SECTIONS.flatMap(s => s.items);
+  const totalDone = allItems.filter(i => data.startupChecklist[i.id]).length;
+  const totalCount = allItems.length;
+  const pct = Math.round(totalDone / totalCount * 100);
+
+  document.getElementById('startup-progress-label').textContent = `${totalDone} of ${totalCount} complete`;
+  document.getElementById('startup-progress-pct').textContent = pct + '%';
+  const fill = document.getElementById('startup-progress-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct === 100 ? 'var(--success)' : pct >= 60 ? 'var(--warning)' : 'var(--primary)';
+
+  document.getElementById('startup-checklist-body').innerHTML = STARTUP_SECTIONS.map(sec => {
+    const secItems = sec.items;
+    const secDone = secItems.filter(i => data.startupChecklist[i.id]).length;
+    const criticalRemaining = secItems.filter(i => i.priority === 'critical' && !data.startupChecklist[i.id]).length;
+
+    const itemsHtml = secItems.map(item => {
+      const checked = !!data.startupChecklist[item.id];
+      return `
+        <div class="startup-item priority-${item.priority}" onclick="toggleStartupItem('${item.id}')">
+          <input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleStartupItem('${item.id}')">
+          <div class="startup-item-body">
+            <div class="startup-item-title ${checked ? 'done' : ''}">${item.title}</div>
+            <div class="startup-item-hint">${item.hint}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const statusBadge = secDone === secItems.length
+      ? '<span class="badge badge-success">Complete</span>'
+      : criticalRemaining > 0
+        ? `<span class="badge badge-danger">${criticalRemaining} critical remaining</span>`
+        : `<span class="badge badge-muted">${secDone}/${secItems.length}</span>`;
+
+    return `
+      <div class="startup-section">
+        <div class="startup-section-header">
+          <span class="startup-section-title">${sec.icon} ${sec.title}</span>
+          ${statusBadge}
+        </div>
+        ${itemsHtml}
+      </div>`;
+  }).join('');
+}
+
+function toggleStartupItem(id) {
+  if (!data.startupChecklist) data.startupChecklist = {};
+  data.startupChecklist[id] = !data.startupChecklist[id];
+  saveData();
+  renderStartup();
+}
+
+// ============================================================
 // FILING HISTORY
 // ============================================================
 
@@ -1518,6 +1765,13 @@ function escHtml(str) {
 // ============================================================
 // INIT
 // ============================================================
+
+// Seed Alchemy Dynamics profile if name is blank (first run)
+if (!data.profile.name) {
+  data.profile.name = 'Alchemy Dynamics LLC';
+  data.profile.taxClass = 'disregarded'; // update in Profile once known
+  saveData();
+}
 
 renderDashboard();
 </script>

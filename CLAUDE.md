@@ -1,7 +1,13 @@
-# CT LLC Compliance Tracker
+# Alchemy Dynamics LLC — CT Compliance & Startup Tracker
 
 ## Project Overview
-Single-file HTML5 web application for tracking and managing Connecticut LLC administrative compliance obligations. Covers annual reports, tax filings, registered agent requirements, and custom obligations. Data stored in browser localStorage — no server, no dependencies, no build step.
+Single-file HTML5 web application for tracking and managing Alchemy Dynamics LLC's Connecticut administrative compliance obligations AND the full startup build-out checklist. Covers annual reports, tax filings, registered agent requirements, USPTO trademark tracking, IP protection, and a comprehensive 40+ item startup checklist. Data stored in browser localStorage — no server, no dependencies, no build step.
+
+## Company
+- **Entity:** Alchemy Dynamics LLC
+- **State:** Connecticut
+- **Domains:** alchemydynamics.com, alchemydynamics.ai
+- **Social:** X, YouTube, Facebook, GitHub, LinkedIn — all @AlchemyDynamics
 
 ## Tech Stack
 - Single `index.html` — all HTML, CSS, and JavaScript embedded
@@ -28,6 +34,7 @@ Open `index.html` directly in a browser:
 - **Obligations** — all recurring state/tax/federal/local obligations; mark as filed, add custom items
 - **Annual Report** — pre-filing checklist, deadline countdown, direct link to CT.gov filing portal
 - **Tax Calendar** — year-selectable timeline of CT tax deadlines; CT-PET election tracker; extension tracking
+- **Startup Checklist** — 40+ item master checklist across Legal, IP, Digital Presence, Financial, and Operations
 - **Filing History** — chronological log of all recorded filings; CSV export
 
 ## Connecticut LLC Compliance Reference
